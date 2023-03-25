@@ -1,0 +1,53 @@
+version: '3.1'
+services:
+
+  teamcity:
+    image: jetbrains/teamcity-server:2022.10.3
+    volumes:
+      - datadir:/data/teamcity-server/datadir
+      - logs:/opt/teamcity/logs
+    ports:
+      - 8111:8111
+
+  teamcity-agent-1:
+    image: jetbrains/teamcity-agent:2022.10.3
+    environment:
+      SERVER_URL: http://teamcity:8111
+    volumes:
+      - agent_conf_1:/data/teamcity_agent/conf
+
+  teamcity-agent-2:
+    image: jetbrains/teamcity-agent:2022.10.3
+    environment:
+      SERVER_URL: http://teamcity:8111
+    volumes:
+      - agent_conf_2:/data/teamcity_agent/conf
+
+  artifactory:
+    image: releases-docker.jfrog.io/jfrog/artifactory-oss:7.55.8
+    container_name: artifactory
+    environment:
+      - JF_ROUTER_ENTRYPOINTS_EXTERNALPORT=8082
+    ports:
+      - 8082:8082 # for router communication
+      - 8081:8081 # for artifactory communication
+    volumes:
+      - artifactory:/var/opt/jfrog/artifactory
+    restart: always
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "10"
+    ulimits:
+      nproc: 65535
+      nofile:
+        soft: 32000
+        hard: 40000
+
+volumes:
+  datadir:
+  logs:
+  agent_conf_1:
+  agent_conf_2:
+  artifactory:
